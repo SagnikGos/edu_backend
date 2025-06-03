@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './src/config/db.js';
 import chapterRoutes from './src/routes/chapterRoutes.js';
+import apiRateLimiter from './src/middlewares/rateLimitMiddleware.js';
 
 dotenv.config();
 
@@ -11,7 +12,12 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5001; 
 
+app.set('trust proxy', 1); 
+
 app.use(express.json());
+
+// rate limiting middleware
+app.use('/api', apiRateLimiter);
 
 // Test Route
 app.get('/', (req, res) => {
