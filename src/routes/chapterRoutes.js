@@ -1,8 +1,7 @@
 import express from 'express';
-import { uploadChapters } from '../controllers/chapterController.js';
+import { uploadChapters, getAllChapters, getChapterById } from '../controllers/chapterController.js';
 import adminAuth from '../middlewares/adminAuth.js';
 import upload from '../middlewares/upload.js';
-import { getAllChapters } from '../controllers/chapterController.js';
 import { cacheAllChapters } from '../middlewares/cacheMiddleware.js';
 
 const router = express.Router();
@@ -20,6 +19,12 @@ router.get(
   '/chapters',
   cacheAllChapters, 
   getAllChapters
+);
+
+// GET /api/v1/chapters/:id
+router.get(
+  '/chapters/:id',
+  getChapterById 
 );
 
 export default router;

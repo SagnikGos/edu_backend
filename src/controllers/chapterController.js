@@ -1,5 +1,6 @@
 import Chapter from '../models/ChapterModel.js';
 import redisClient from '../config/redis.js'; 
+import mongoose from 'mongoose';
 
 export const uploadChapters = async (req, res) => {
   if (!req.file) {
@@ -145,5 +146,35 @@ export const getAllChapters = async (req, res) => {
   } catch (error) {
     console.error('Error fetching chapters:', error);
     res.status(500).json({ message: 'Server error while fetching chapters', error: error.message });
+  }
+};
+
+
+export const getChapterById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid chapter ID format.' });
+    }
+
+    const chapter = await Chapter.findById(id);
+
+    if (!chapter) {
+      return res.status(404).json({ message: 'Chapter not found.' });
+    }
+
+    res.status(200).json({
+      message: 'Chapter retrieved successfully',
+      chapter,
+    });
+  } catch (error) {
+    console.error('Error fetching chapter by ID:', error);
+    
+    if (error.name === 'CastError') {
+        return res.status(400).json({ message: 'Invalid chapter ID format.' });
+    }
+    res.status(500).json({ message: 'Server error while fetching chapter', error: error.message });
   }
 };
