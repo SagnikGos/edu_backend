@@ -39,17 +39,46 @@ export const uploadChapters = async (req, res) => {
   }
 
   
-  try {
-    await redisClient.del('chapters'); 
-    console.log('Redis cache for /api/v1/chapters invalidated.');
-  } catch (cacheError) {
-    console.error('Error invalidating Redis cache:', cacheError);
-    
-  }
+  if (redisClient && uploadedChapters.length > 0) {
+    try {
+      
+      await redisClient.del('chapters_all');
+      console.log("Invalidated 'chapters_all' cache key.");
 
+      
+      const stream = redisClient.scanStream({
+        match: 'chapters_filtered::*', 
+        count: 100 
+      });
+
+      const keysToDelete = [];
+      stream.on('data', (resultKeys) => {
+        if (resultKeys.length > 0) {
+          keysToDelete.push(...resultKeys);
+        }
+      });
+
+      stream.on('end', async () => {
+        if (keysToDelete.length > 0) {
+          await redisClient.del(...keysToDelete); 
+          console.log(`Invalidated ${keysToDelete.length} filtered chapter caches.`);
+        } else {
+            console.log('No filtered chapter caches found to invalidate.');
+        }
+      });
+
+      stream.on('error', (err) => {
+        console.error('Error during Redis SCAN stream for cache invalidation:', err);
+      });
+
+    } catch (cacheError) {
+      console.error('Error invalidating Redis cache:', cacheError);
+      
+    }
+  }
+  
 
   const statusCode = failedChapters.length > 0 ? 207 : 201; 
-
   res.status(statusCode).json({
     message: 'Chapter upload process completed.',
     totalProcessed: chaptersData.length,
