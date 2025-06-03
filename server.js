@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './src/config/db.js';
+import chapterRoutes from './src/routes/chapterRoutes.js';
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Chapter Performance Dashboard API is running!');
 });
+// Chapter Routes
+app.use('/api/v1', chapterRoutes);
 
 // Server
 app.listen(PORT, () => {
