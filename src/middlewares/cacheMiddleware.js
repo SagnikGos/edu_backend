@@ -7,8 +7,6 @@ export const cacheAllChapters = async (req, res, next) => {
     return next();
   }
 
-  
-
   let cacheKey = 'chapters_all'; 
 
   
@@ -31,15 +29,20 @@ export const cacheAllChapters = async (req, res, next) => {
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log(`Cache hit for key: ${cacheKey}`);
+      
       return res.status(200).json(JSON.parse(cachedData));
     } else {
       console.log(`Cache miss for key: ${cacheKey}`);
       
-      const originalSend = res.send.bind(res);
+
       const originalJson = res.json.bind(res); 
+      
+      
       res.json = async (body) => {
-        if (res.statusCode === 200) { 
+        
+        if (res.statusCode >= 200 && res.statusCode < 300) { 
           try {
+            
             await redisClient.setex(cacheKey, CACHE_DURATION_SECONDS, JSON.stringify(body));
             console.log(`Data cached for key: ${cacheKey}, duration: ${CACHE_DURATION_SECONDS}s`);
           } catch (cacheSetError) {
@@ -49,28 +52,7 @@ export const cacheAllChapters = async (req, res, next) => {
         return originalJson(body); 
       };
       
-      res.send = async (body) => {
-         if (res.statusCode === 200) {
-            try {
-                
-                let dataToCache = body;
-                if (typeof body === 'string') {
-                    try {
-                        JSON.parse(body); 
-                    } catch (e) {
-                        
-                        console.log('Response body is not JSON, not caching via res.send');
-                        return originalSend(body);
-                    }
-                }
-                await redisClient.setex(cacheKey, CACHE_DURATION_SECONDS, JSON.stringify(dataToCache));
-                console.log(`Data cached via res.send for key: ${cacheKey}`);
-            } catch (cacheSetError) {
-                console.error(`Error setting cache via res.send for key ${cacheKey}:`, cacheSetError);
-            }
-        }
-        return originalSend(body);
-      };
+
 
       next(); 
     }

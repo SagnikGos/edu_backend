@@ -19,10 +19,7 @@ app.use(express.json());
 // rate limiting middleware
 app.use('/api', apiRateLimiter);
 
-// Test Route
-app.get('/', (req, res) => {
-  res.send('Chapter Performance Dashboard API is running!');
-});
+
 // Chapter Routes
 app.use('/api/v1', chapterRoutes);
 
